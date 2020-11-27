@@ -1,5 +1,4 @@
 import firebase from 'firebase/app'
-
 import 'firebase/auth'
 import 'firebase/firestore'
 
@@ -18,12 +17,43 @@ const firebaseConfig ={
 firebase.initializeApp(firebaseConfig);
 
 const gglProvider = new firebase.auth.GoogleAuthProvider();
-// gglProvider.setCustomParameters({'prompt':'select_account'}); //optional 
-
+gglProvider.setCustomParameters({'prompt':'select_account'}); //optional 
 
 const myGoogleSignIn = ()=>firebase.auth().signInWithPopup(gglProvider);
+
+const myFirestore = firebase.firestore();
+
+const setUserIntoFirestore = async (authUser, otherInfo)=>{
+    if (!authUser) return;       
+    
+    const myRefObj = myFirestore.doc(`users/${authUser.uid}`)
+    const mySnapshotObj= await myRefObj.get();
+    if(mySnapshotObj.exists){
+        console.log('it exists')        
+    }else{
+        console.log('it doesnt exist')
+        const {displayName, email} = authUser;
+        const setDate = new Date();
+        try {
+            await myRefObj.set({
+                displayName,
+                email,
+                setDate,
+                ...otherInfo
+            })
+            console.log('it was added')    
+        } catch (error) {
+            console.log('error inserting date inot DB', error.message)
+        }
+    
+    }    
+    return myRefObj;         
+}
+
+
 
 export const auth = firebase.auth();
 export {myGoogleSignIn};
 export default firebase;
+export {setUserIntoFirestore}
 

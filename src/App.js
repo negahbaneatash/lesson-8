@@ -7,7 +7,8 @@ import HomePage from './pages/homepage/homepage.component';
 import ShopPage from './pages/shop/shop.component';
 import SignInAndSignUpPage from './pages/sign-in-and-sign-up/sign-in-and-sign-up.component';
 import Header from './components/header/header.component';
-import { auth } from './firebase/firebase.utilities';
+import { auth, setUserIntoFirestore } from './firebase/firebase.utilities';
+
 
 
 class App extends React.Component{
@@ -22,9 +23,22 @@ class App extends React.Component{
 
   unsubscribe = null;
   componentDidMount(){
-    this.unsubscribe= auth.onAuthStateChanged(user=>{
-      this.setState({'currentUser': user})
-      
+    this.unsubscribe= auth.onAuthStateChanged(async user=>{ 
+      if (user) {       
+        const myRefOfFirestore = await setUserIntoFirestore(user);
+        myRefOfFirestore.onSnapshot(snapshot=>{
+          this.setState({
+            currentUser:{
+              id:snapshot.uid,
+              ...snapshot.data()
+            }
+          })
+        }) 
+      } else {
+        this.setState({
+          currentUser:user
+        })
+      }
     })        
   }
   
